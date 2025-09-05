@@ -260,9 +260,17 @@ torch.save(model.state_dict(), "simple_transformer_encdec.pth")
 # -------------------------
 model.eval()
 with torch.no_grad():
-    # 取一段 source（连续字符）
-    start = 0
-    src_example = train_ids[start:start+block_size].unsqueeze(0).to(device)  # (1, block_size)
-    gen_ids = model.generate(src_example, max_new_tokens=200)  # (1, Tgen)
-    print("SRC  :", decode(src_example[0].tolist()))
-    print("GEN  :", decode(gen_ids[0].tolist()))
+    # 让用户输入一段字符串作为 source
+    user_input = "attentionとは"
+    src_ids = encode(user_input)
+    src_example = torch.tensor([src_ids], dtype=torch.long, device=device)
+
+    gen_ids = model.generate(
+        src_example, 
+        max_new_tokens=200, 
+        temperature=0.8,   # 温度 <1 → 更保守，更连贯
+        top_k=50           # 只在前 50 个候选中采样
+    )
+
+    print("SRC :", user_input)
+    print("GEN :", decode(gen_ids[0].tolist()))

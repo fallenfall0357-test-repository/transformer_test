@@ -263,14 +263,16 @@ model.load_state_dict(torch.load('simple_transformer_encdec.pth', weights_only=T
 model.eval()
 with torch.no_grad():
     # 让用户输入一段字符串作为 source
-    user_input = "attentionとは"   # <-- 这里替换成任何你想要的输入
+    user_input = "attentionとは"
     src_ids = encode(user_input)
+    src_example = torch.tensor([src_ids], dtype=torch.long, device=device)
 
-    # 转成 tensor，形状 (1, T)
-    src_example = torch.tensor(src_ids, dtype=torch.long, device=device).unsqueeze(0)
+    gen_ids = model.generate(
+        src_example, 
+        max_new_tokens=200, 
+        temperature=0.8,   # 温度 <1 → 更保守，更连贯
+        top_k=50           # 只在前 50 个候选中采样
+    )
 
-    # 调用 generate
-    gen_ids = model.generate(src_example, max_new_tokens=200)
-
-    print("SRC  :", user_input)
-    print("GEN  :", decode(gen_ids[0].tolist()))
+    print("SRC :", user_input)
+    print("GEN :", decode(gen_ids[0].tolist()))
