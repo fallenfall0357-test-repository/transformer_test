@@ -232,11 +232,11 @@ class SimpleTransformerEncDec(nn.Module):
 # 超参数 & 模型
 # -------------------------
 block_size = 256      # src length
-batch_size = 64
-d_model = 256
-num_heads = 16
-num_enc_layers = 3
-num_dec_layers = 3
+batch_size = 32
+d_model = 512
+num_heads = 8
+num_enc_layers = 6
+num_dec_layers = 6
 max_tgt_len = block_size + 1  # 因为我们会在 tgt_in 前置 BOS
 
 model = SimpleTransformerEncDec(len(itos), d_model=d_model, num_heads=num_heads,
