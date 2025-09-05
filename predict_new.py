@@ -190,18 +190,21 @@ class SimpleTransformerEncDec(nn.Module):
         return logits
 
     @torch.no_grad()
-    def generate(self, src, max_new_tokens=100, temperature=1.0, top_k=50):
+    def generate(self, src, max_new_tokens=100, temperature=1.0, top_k=50,
+                bos_id=1, eos_id=2):
         """
-        src: (B, T) 初始输入
-        max_new_tokens: 生成的新 token 数
-        temperature: softmax 温度 (<1 更保守, >1 更随机)
-        top_k: 限制采样范围 (取概率前 k 大的 token)
+        src: (B, S) 源序列
         """
-        for _ in range(max_new_tokens):
-            logits, _ = self.forward(src)   # (B, T, vocab_size)
-            logits = logits[:, -1, :]       # 取最后一步 (B, vocab_size)
+        B = src.size(0)
+        # 初始目标序列：只包含 BOS
+        tgt_in = torch.full((B, 1), bos_id, dtype=torch.long, device=src.device)
 
-            # 调整温度
+        for _ in range(max_new_tokens):
+            # forward: 编码器 + 解码器
+            logits = self.forward(src, tgt_in)   # (B, Tt, vocab_size)
+            logits = logits[:, -1, :]            # 取最后一步预测 (B, vocab_size)
+
+            # 温度缩放
             logits = logits / temperature
 
             # Top-k 筛选
@@ -210,14 +213,19 @@ class SimpleTransformerEncDec(nn.Module):
                 mask = logits < v[:, [-1]]
                 logits[mask] = -float("Inf")
 
-            # softmax → 采样
+            # softmax + 采样
             probs = F.softmax(logits, dim=-1)
             idx_next = torch.multinomial(probs, num_samples=1)  # (B,1)
 
-            # 拼接到序列
-            src = torch.cat((src, idx_next), dim=1)
+            # 拼接到目标序列
+            tgt_in = torch.cat((tgt_in, idx_next), dim=1)
 
-        return src
+            # 如果生成到 EOS，就提前结束
+            if (idx_next == eos_id).all():
+                break
+
+        return tgt_in
+
 
 
 # -------------------------
@@ -268,10 +276,12 @@ with torch.no_grad():
     src_example = torch.tensor([src_ids], dtype=torch.long, device=device)
 
     gen_ids = model.generate(
-        src_example, 
-        max_new_tokens=200, 
-        temperature=0.8,   # 温度 <1 → 更保守，更连贯
-        top_k=50           # 只在前 50 个候选中采样
+    src_example,
+    max_new_tokens=200,
+    temperature=0.8,
+    top_k=50,
+    bos_id=bos_id,
+    eos_id=eos_id
     )
 
     print("SRC :", user_input)
