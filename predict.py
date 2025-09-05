@@ -99,7 +99,7 @@ model.load_state_dict(torch.load('model_weights.pth'))
 
 #idx = torch.zeros((1,1), dtype = torch.long)
 while True:
-    input_text = input("\n")
+    input_text = input("Input test:\n")
     idx = torch.tensor([encode(input_text)], dtype=torch.long)
     for _ in range(400):
         idx_pred = idx[:, -block_size:]
@@ -111,3 +111,4 @@ while True:
 
     predict = decode(idx[0].tolist())
     print("予測結果 : ", predict)
+
