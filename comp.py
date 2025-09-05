@@ -229,12 +229,12 @@ class SimpleTransformerEncDec(nn.Module):
 # -------------------------
 # 超参数 & 模型
 # -------------------------
-block_size = 128      # src length
+block_size = 256      # src length
 batch_size = 32
-d_model = 256
-num_heads = 16
-num_enc_layers = 3
-num_dec_layers = 3
+d_model = 512
+num_heads = 8
+num_enc_layers = 6
+num_dec_layers = 6
 max_tgt_len = block_size + 1  # 因为我们会在 tgt_in 前置 BOS
 
 model = SimpleTransformerEncDec(len(itos), d_model=d_model, num_heads=num_heads,
@@ -246,7 +246,7 @@ optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
 # -------------------------
 # 训练循环（示例：copy task）
 # -------------------------
-steps = 5000
+steps = 50000
 model.train()
 pbar = tqdm(range(steps), desc="Training")
 for step in pbar:
